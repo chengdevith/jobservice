@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: job-service
+  mongodb:
+    uri: ${SPRING_DATA_MONGODB_URI}
+
+# change port
+server:
+  port: 8080

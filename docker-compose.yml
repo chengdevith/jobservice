@@ -1,0 +1,14 @@
+services:
+  job-service-db:
+    image: mongo:7.0
+    container_name: job-service-db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: benz
+      MONGO_INITDB_ROOT_PASSWORD: benz
+    volumes:
+      - job-service-vol:/data/db
+
+volumes:
+  job-service-vol:
