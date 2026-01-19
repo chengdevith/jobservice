@@ -3,7 +3,11 @@ spring:
     name: job-service
   mongodb:
     uri: ${SPRING_DATA_MONGODB_URI}
-
+    #uri: mongodb://benz:benz@localhost:27017/job_service_db?authSource=admin
 # change port
 server:
   port: 8080
+
+media:
+  server-path: /mnt/nfs_shared
+  base-uri: http://localhost:8080/media/

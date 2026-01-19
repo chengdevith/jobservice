@@ -1,0 +1,77 @@
+package com.jobfinder.jobservice.service.impl;
+
+import com.jobfinder.jobservice.domain.Media;
+import com.jobfinder.jobservice.dto.MediaResponse;
+import com.jobfinder.jobservice.repository.MediaRepository;
+import com.jobfinder.jobservice.service.MediaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class MediaServiceImpl implements MediaService {
+
+    private final MediaRepository mediaRepository;
+
+    @Value("${media.server-path}")
+    private String serverPath;
+
+    @Value("${media.base-uri}")
+    private String baseUri;
+
+    @Override
+    public MediaResponse upload(MultipartFile file) {
+
+        String name = UUID.randomUUID().toString();
+        int lastIndex = Objects.requireNonNull(file.getOriginalFilename()).lastIndexOf('.');
+        String extension =file.getOriginalFilename().substring(lastIndex + 1);
+        Path path = Paths.get(serverPath + String.format("%s.%s", name, extension));
+
+        try {
+            Files.copy(file.getInputStream(),path);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"File upload failed");
+        }
+
+        Media media = new Media();
+        media.setName(name);
+        media.setExtension(extension);
+        media.setMineTypeFile(file.getContentType());
+        media.setIsDeleted(false);
+
+        media =  mediaRepository.save(media);
+
+        return MediaResponse.builder()
+                .name(media.getName())
+                .extension(media.getExtension())
+                .mimeTypeFile(media.getMineTypeFile())
+                .uri(baseUri + String.format("%s.%s", name, extension))
+                .size(file.getSize())
+                .build();
+    }
+
+    @Override
+    public void deleteFile(String fileName) {
+        Path filePath = Paths.get(serverPath + fileName);
+
+        if(!Files.exists(filePath)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"File not found");
+        }
+        try{
+            Files.delete(filePath);
+        }catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"File upload failed");
+        }
+    }
+}
